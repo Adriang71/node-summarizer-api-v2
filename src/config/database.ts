@@ -5,6 +5,10 @@ export const connectDatabase = async (): Promise<void> => {
     const mongoUri = process.env.MONGODB_URI;
     
     if (!mongoUri) {
+      if (process.env.NODE_ENV === 'test') {
+        console.warn('⚠️ MONGODB_URI not defined for tests - some tests may fail');
+        return;
+      }
       throw new Error('MONGODB_URI is not defined in environment variables');
     }
 
@@ -12,7 +16,11 @@ export const connectDatabase = async (): Promise<void> => {
     console.log('✅ Connected to MongoDB successfully');
   } catch (error) {
     console.error('❌ MongoDB connection error:', error);
-    process.exit(1);
+    if (process.env.NODE_ENV !== 'test') {
+      process.exit(1);
+    } else {
+      console.warn('⚠️ Database connection failed in test environment');
+    }
   }
 };
 

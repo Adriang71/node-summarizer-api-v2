@@ -25,7 +25,7 @@ app.use(helmet());
 // CORS middleware
 app.use(cors({
   origin: process.env.NODE_ENV === 'production' 
-    ? ['https://*.vercel.app', 'https://*.vercel.com', process.env.FRONTEND_URL].filter(Boolean)
+    ? ['https://*.vercel.app', 'https://*.vercel.com', process.env.FRONTEND_URL || ''].filter(Boolean)
     : ['http://localhost:3000', 'http://localhost:3001'],
   credentials: true
 }));
@@ -41,6 +41,12 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use((req, res, next) => {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
   next();
+});
+
+// Swagger JSON endpoint
+app.get('/api-docs/swagger.json', (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.json(swaggerDocument);
 });
 
 // Swagger documentation
@@ -90,6 +96,16 @@ async function startServer() {
   }
 }
 
+// Connect to database for tests
+async function connectForTests() {
+  try {
+    await connectDatabase();
+    console.log('✅ Connected to database for tests');
+  } catch (error) {
+    console.warn('⚠️ Could not connect to database for tests:', error);
+  }
+}
+
 // Graceful shutdown handling
 process.on('SIGTERM', async () => {
   console.log('🛑 Received SIGTERM, shutting down server...');
@@ -101,7 +117,12 @@ process.on('SIGINT', async () => {
   process.exit(0);
 });
 
-// Start server
-startServer();
+// Start server only if not in test environment
+if (process.env.NODE_ENV !== 'test') {
+  startServer();
+} else {
+  // Connect to database for tests without starting server
+  connectForTests();
+}
 
 export default app; 

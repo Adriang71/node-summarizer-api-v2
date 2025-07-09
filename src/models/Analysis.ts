@@ -10,8 +10,7 @@ const AnalysisSchema = new Schema<AnalysisRecord>({
   },
   userId: {
     type: String,
-    required: true,
-    index: true
+    required: true
   },
   analysis: {
     summary: {
